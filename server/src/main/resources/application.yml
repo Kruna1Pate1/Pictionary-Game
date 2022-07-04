@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: Pictionary Game
+
+
+
+  # RSocket Configuration
+  rsocket:
+    server:
+      address: localhost
+      port: 6565
+      transport: tcp
+
+  main:
+    lazy-initialization: true
+
+
+
+debug: true
+# Logging Setting
+logging:
+  level:
+    root: info
+    com.kruna1pate1.pictionaryserver: debug
+    org.springframework.data.redis: debug
+    reactor: debug
