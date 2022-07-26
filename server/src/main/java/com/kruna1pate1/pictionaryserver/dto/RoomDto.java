@@ -20,13 +20,13 @@ public class RoomDto {
 
     private String name;
 
-    private Integer capacity;
-
-    private PlayerDto[] players;
-
-    private GameStatus status;
-
-//    private Round round;
     private Integer playerCount;
 
+    private Integer capacity;
+
+//    private PlayerDto[] players;
+
+    //    private Round round;
+
+    private GameStatus status;
 }

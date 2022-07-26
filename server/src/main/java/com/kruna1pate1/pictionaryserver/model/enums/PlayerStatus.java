@@ -5,10 +5,6 @@ package com.kruna1pate1.pictionaryserver.model.enums;
  */
 public enum PlayerStatus {
     IDLE,
-    CREATE,
-    JOIN,
-    LEFT,
-    WORD_SELECTING,
     DRAWING,
     GUESSING,
     GUESSED

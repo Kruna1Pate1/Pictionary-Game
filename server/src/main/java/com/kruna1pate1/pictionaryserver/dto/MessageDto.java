@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class MessageDto {
 
-    private PlayerDto sender;
+    private PlayerDto player;
 
     private String body;
 

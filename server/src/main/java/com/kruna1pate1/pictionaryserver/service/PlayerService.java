@@ -14,7 +14,9 @@ public interface PlayerService {
 
     Player getPlayer(int id) throws PlayerNotFoundException;
 
-    Player addPlayer(Player player);
+    Player createPlayer(String name);
+
+    Player updatePlayer(Player player);
 
     Player removePlayer(int id) throws PlayerNotFoundException;
 

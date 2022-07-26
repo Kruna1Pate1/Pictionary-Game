@@ -1,6 +1,7 @@
 package com.kruna1pate1.pictionaryserver.service;
 
 import com.kruna1pate1.pictionaryserver.dto.BoardDto;
+import com.kruna1pate1.pictionaryserver.model.DrawData;
 import reactor.core.publisher.Flux;
 
 /**
@@ -9,9 +10,9 @@ import reactor.core.publisher.Flux;
 public interface BoardService {
     void createBoard(String roomId);
 
-    Flux<BoardDto> getBoard(String roomId);
+    Flux<DrawData> getBoard(String roomId);
 
-    void sendBoard(String roomId, BoardDto board);
+    void sendDrawData(String roomId, DrawData drawData);
 
     void removeBoard(String roomId);
 }

@@ -3,6 +3,7 @@ package com.kruna1pate1.pictionaryserver.service.Impl;
 import com.kruna1pate1.pictionaryserver.dto.PlayerDto;
 import com.kruna1pate1.pictionaryserver.exception.PlayerNotFoundException;
 import com.kruna1pate1.pictionaryserver.model.Player;
+import com.kruna1pate1.pictionaryserver.model.enums.PlayerStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -45,9 +46,25 @@ public class PlayerServiceImpl implements com.kruna1pate1.pictionaryserver.servi
     }
 
     @Override
-    public Player addPlayer(Player player) {
+    public Player createPlayer(String name) {
+        Player player = new Player();
+        player.setName(name);
         player.setId(atomicInteger.incrementAndGet());
-        return players.put(player.getId(), player);
+        player.setStatus(PlayerStatus.IDLE);
+        players.put(player.getId(), player);
+        return player;
+    }
+
+
+    @Override
+    public Player updatePlayer(Player player) {
+        try {
+            players.put(player.getId(), player);
+            return player;
+
+        } catch (Exception e) {
+            return createPlayer(player.getName());
+        }
     }
 
     @Override
@@ -75,7 +92,7 @@ public class PlayerServiceImpl implements com.kruna1pate1.pictionaryserver.servi
 
     @Override
     public PlayerDto playerToDto(Player player) {
-
+        log.debug("player" + player.toString());
         return modelMapper.map(player, PlayerDto.class);
     }
 }

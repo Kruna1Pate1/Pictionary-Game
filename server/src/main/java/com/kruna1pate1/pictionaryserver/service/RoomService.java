@@ -18,11 +18,11 @@ public interface RoomService {
 
     Room getRoom(String id) throws RoomNotFoundException;
 
-    List<Room> getAllRoom();
+    List<Room> getAllRoom(String query);
 
-    List<Room> getRoomStartsWith(String s);
+    List<Room> getRoomStartsWith(String query);
 
-    Room createRoom(Room room);
+    Room createRoom(String name, int capacity);
 
     Room removeRoom(String id) throws RoomNotFoundException;
 
@@ -34,7 +34,7 @@ public interface RoomService {
 
     Flux<GameDto> getRoomStream(String id);
 
-    void broadcastRoomDetails(String roomId, RoomDto roomDto);
+    void broadcastRoomDetails(String roomId) throws RoomNotFoundException;
 
     void broadcastScores(String roomId);
 
@@ -50,5 +50,5 @@ public interface RoomService {
 
     Room dtoToRoom(RoomDto playerDto);
 
-    RoomDto roomToDto(Room room, ServerCode code);
+    RoomDto roomToDto(Room room);
 }

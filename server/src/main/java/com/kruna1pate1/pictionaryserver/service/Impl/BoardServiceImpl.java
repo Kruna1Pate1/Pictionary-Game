@@ -1,6 +1,6 @@
 package com.kruna1pate1.pictionaryserver.service.Impl;
 
-import com.kruna1pate1.pictionaryserver.dto.BoardDto;
+import com.kruna1pate1.pictionaryserver.model.DrawData;
 import com.kruna1pate1.pictionaryserver.service.BoardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.util.Map;
 @Service
 public class BoardServiceImpl implements BoardService {
 
-    private final Map<String, Sinks.Many<BoardDto>> boardSinkMap;
+    private final Map<String, Sinks.Many<DrawData>> boardSinkMap;
 
     public BoardServiceImpl() {
         this.boardSinkMap = new HashMap<>();
@@ -30,15 +30,15 @@ public class BoardServiceImpl implements BoardService {
     }
 
     @Override
-    public Flux<BoardDto> getBoard(String roomId) {
+    public Flux<DrawData> getBoard(String roomId) {
 
         return boardSinkMap.get(roomId).asFlux();
     }
 
     @Override
-    public void sendBoard(String roomId, BoardDto board) {
-
-        boardSinkMap.get(roomId).tryEmitNext(board);
+    public void sendDrawData(String roomId, DrawData drawData) {
+        log.debug(drawData.toString());
+        boardSinkMap.get(roomId).tryEmitNext(drawData);
     }
 
     @Override

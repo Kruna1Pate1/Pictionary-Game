@@ -7,6 +7,5 @@ public enum GameStatus {
     WAITING,
     INITIAL,
     RUNNING,
-    CHANGE,
-    COMPLETE
+    END
 }

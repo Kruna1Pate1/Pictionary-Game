@@ -1,4 +1,4 @@
-package com.kruna1pate1.pictionaryapp.presentation.theme
+package com.kruna1pate1.pictionaryapp.presentation.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

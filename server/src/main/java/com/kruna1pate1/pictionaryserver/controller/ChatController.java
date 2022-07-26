@@ -17,14 +17,13 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final ChatService chatService;
-
-    @MessageMapping("room.{id}.chat")
-    public Flux<MessageDto> getChat(Flux<MessageDto> messageDto, @DestinationVariable("id") String roomId) {
-
-        messageDto.doOnNext(message -> log.debug(message.toString()))
-                .subscribe(message -> chatService.sendMessage(roomId, message));
-
-        return chatService.getChat(roomId);
-    }
+//    private final ChatService chatService;
+//
+//    @MessageMapping("room.{id}.chat")
+//    public Flux<MessageDto> getChat(Flux<MessageDto> messageDto, @DestinationVariable("id") String roomId) {
+//
+//        return messageDto
+//                .doOnNext(message -> chatService.sendMessage(roomId, message))
+//                .switchMap(m -> chatService.getChat(roomId));
+//    }
 }

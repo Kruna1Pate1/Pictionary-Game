@@ -32,9 +32,9 @@ public class GameService {
         this.boardService = boardService;
     }
 
-    public Room createRoom(Room room) {
+    public Room createRoom(String name, int capacity) {
 
-        Room room1 = roomService.createRoom(room);
+        Room room1 = roomService.createRoom(name, capacity);
 
         room1.setLeaderboard(leaderboardService.createLeaderboard(room1.getId()));
         try {

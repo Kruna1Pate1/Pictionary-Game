@@ -6,7 +6,6 @@ import com.kruna1pate1.pictionaryserver.model.Player;
 import com.kruna1pate1.pictionaryserver.service.PlayerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
@@ -28,27 +27,48 @@ public class PlayerController {
                 .map(playerService::playerToDto);
     }
 
-    @MessageMapping("player.get.{id}")
-    public Mono<PlayerDto> getPlayer(@DestinationVariable("id") int id) throws PlayerNotFoundException {
-        Player player = playerService.getPlayer(id);
-
-        PlayerDto playerDto = playerService.playerToDto(player);
-        return Mono.just(playerDto);
+    @MessageMapping("player.get")
+    public Mono<PlayerDto> getPlayer(Mono<Integer> id) throws PlayerNotFoundException {
+        return id.map(p ->
+                {
+                    try {
+                        return playerService.getPlayer(p);
+                    } catch (PlayerNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        ).map(playerService::playerToDto);
     }
 
     @MessageMapping("player.create")
-    public Mono<Boolean> addPlayer(Mono<PlayerDto> player) {
+    public Mono<PlayerDto> addPlayer(Mono<String> name) {
 
-        return player.map(playerService::dtoToPlayer)
-                .doOnNext(player1 -> log.debug(player1.toString()))
-                .map(player1 -> playerService.addPlayer(player1) != null);
+        return name.map(playerService::createPlayer)
+                .map(playerService::playerToDto);
     }
 
-    @MessageMapping("player.delete.{id}")
-    public Mono<PlayerDto> removePlayer(@DestinationVariable("id") int id) throws PlayerNotFoundException {
+    @MessageMapping("player.update")
+    public Mono<PlayerDto> updatePlayer(Mono<PlayerDto> player) {
 
-        return Mono.just(playerService.removePlayer(id))
-                .map(playerService::playerToDto);
+        return player.map(playerDto -> {
+            Player p = playerService.dtoToPlayer(playerDto);
+            return playerService.playerToDto(
+                    playerService.updatePlayer(p)
+            );
+        });
+    }
+
+    @MessageMapping("player.delete")
+    public Mono<PlayerDto> removePlayer(Mono<Integer> id) throws PlayerNotFoundException {
+        return id.map(p ->
+                {
+                    try {
+                        return playerService.removePlayer(p);
+                    } catch (PlayerNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        ).map(playerService::playerToDto);
     }
 
 

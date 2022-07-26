@@ -63,9 +63,14 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public List<Room> getAllRoom() {
+    public List<Room> getAllRoom(String query) {
 
-        return rooms.values().stream().toList();
+
+        return rooms.values()
+                .stream()
+                .filter(r ->
+                        query.isBlank() || r.getName().contains(query))
+                .toList();
     }
 
     @Override
@@ -77,14 +82,16 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public Room createRoom(Room room) {
+    public Room createRoom(String name, int capacity) {
 
+        Room room = new Room(capacity);
         String id;
         do {
             id = RandomStringUtils.randomAlphabetic(6).toUpperCase();
 
         } while (rooms.containsKey(id));
 
+        room.setName(name);
         room.setId(id);
         room.setStatus(GameStatus.INITIAL);
         rooms.put(id, room);
@@ -131,7 +138,7 @@ public class RoomServiceImpl implements RoomService {
         roomSinkMap.get(roomId)
                 .tryEmitNext(new GameDto<>(
                         ServerCode.GAME_DETAIL,
-                        roomToDto(room, ServerCode.GAME_DETAIL)
+                        roomToDto(room)
                 ));
 
         return room;
@@ -150,7 +157,9 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public void broadcastRoomDetails(String roomId, RoomDto roomDto) {
+    public void broadcastRoomDetails(String roomId) throws RoomNotFoundException {
+
+        RoomDto roomDto = roomToDto(getRoom(roomId));
 
         roomSinkMap.get(roomId).tryEmitNext(
                 new GameDto<>(ServerCode.GAME_DETAIL, roomDto)
@@ -227,7 +236,7 @@ public class RoomServiceImpl implements RoomService {
     }
 
     @Override
-    public RoomDto roomToDto(Room room, ServerCode code) {
+    public RoomDto roomToDto(Room room) {
 
         RoomDto dto = modelMapper.map(room, RoomDto.class);
 

@@ -1,4 +1,12 @@
-package com.kruna1pate1.pictionaryserver.model.enums;/**
+package com.kruna1pate1.pictionaryserver.model.enums;
+
+/**
  * Created by KRUNAL on 15-07-2022
- */public enum CanvasAction {
+ */
+public enum CanvasAction {
+    RESET,
+    DRAW,
+    ERASE,
+    UNDO,
+    REDO
 }
