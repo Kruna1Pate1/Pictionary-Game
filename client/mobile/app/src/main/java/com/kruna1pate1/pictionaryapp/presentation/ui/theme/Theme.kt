@@ -1,4 +1,4 @@
-package com.kruna1pate1.pictionaryapp.ui.theme
+package com.kruna1pate1.pictionaryapp.presentation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
