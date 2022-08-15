@@ -21,5 +21,5 @@ public class DrawData {
 
     private CanvasAction action;
 
-    private Float color;
+    private Integer color;
 }

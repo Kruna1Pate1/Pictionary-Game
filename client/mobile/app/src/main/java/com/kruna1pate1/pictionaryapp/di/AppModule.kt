@@ -123,5 +123,4 @@ object AppModule {
     ): ChatRepository =
         ChatRepositoryImpl(chatApi, gson)
 
-
 }

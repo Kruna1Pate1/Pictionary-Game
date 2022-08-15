@@ -1,4 +1,4 @@
-package com.kruna1pate1.pictionaryapp.presentation.ui.game.component
+package com.kruna1pate1.pictionaryapp.presentation.ui.game.component.canvas
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row

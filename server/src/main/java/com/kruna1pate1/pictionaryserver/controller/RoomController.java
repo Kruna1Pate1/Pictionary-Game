@@ -35,30 +35,6 @@ public class RoomController {
                         .map(roomService::roomToDto));
     }
 
-    @MessageMapping("room.{id}")
-    public Mono<GameDto> selectWord(Mono<GameDto> gameDto, @DestinationVariable("id") String id) {
-
-        return gameDto.mapNotNull(g ->
-        {
-            switch (g.code()) {
-
-                case SELECT_WORD -> {
-                    g = new GameDto<>(ServerCode.SELECT_WORD, roomService.selectWord(id, (int) g.data()));
-                }
-                case GAME_DETAIL -> {
-                    try {
-                        g = new GameDto<>(ServerCode.GAME_DETAIL, roomService.getRoom(id));
-                    } catch (RoomNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                case PLAYERS, ROUND, SCORES, HINT -> {
-                    g = null;
-                }
-            }
-            return g;
-        });
-    }
 
     @MessageMapping("room.create")
     public Mono<RoomDto> createRoom(Mono<CreateRoomDto> createRoomDto) {

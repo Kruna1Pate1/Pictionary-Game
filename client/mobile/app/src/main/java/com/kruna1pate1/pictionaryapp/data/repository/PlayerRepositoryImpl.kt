@@ -8,7 +8,6 @@ import com.kruna1pate1.pictionaryapp.domain.model.Player
 import com.kruna1pate1.pictionaryapp.domain.repository.PlayerRepository
 import com.kruna1pate1.pictionaryapp.util.Constants.TAG
 import com.kruna1pate1.pictionaryapp.util.Resource
-import io.rsocket.kotlin.ExperimentalMetadataApi
 import javax.inject.Inject
 
 class PlayerRepositoryImpl @Inject constructor(
@@ -66,12 +65,17 @@ class PlayerRepositoryImpl @Inject constructor(
 
     override suspend fun getPlayer(): Resource<Player> {
 
-        val player = preference.readPlayer()
+        var player = preference.readPlayer()
+        return try {
 
-        return if (player != null) {
-            Resource.Success(player)
-
-        } else {
+            player?.let {
+                val data: String = playerApi.getPlayerById(it.id).data.readText()
+                player = gson.fromJson(data, Player::class.java)
+                preference.savePlayer(player!!)
+            }
+            Resource.Success(player!!)
+        } catch (e: Exception) {
+            e.printStackTrace()
             Resource.Error("Can' fetch player")
         }
 

@@ -1,5 +1,6 @@
 package com.kruna1pate1.pictionaryserver.service;
 
+import com.kruna1pate1.pictionaryserver.dto.RoundDto;
 import com.kruna1pate1.pictionaryserver.exception.RoomNotFoundException;
 import com.kruna1pate1.pictionaryserver.model.Round;
 
@@ -19,4 +20,6 @@ public interface RoundService {
     void startRound(String roomId);
 
     String selectWord(String roomId, int pos);
+
+    RoundDto roundToDto(Round round);
 }

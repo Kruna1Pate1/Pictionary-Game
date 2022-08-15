@@ -13,6 +13,7 @@ import com.kruna1pate1.pictionaryapp.util.Constants.TAG
 import com.kruna1pate1.pictionaryapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -87,5 +88,4 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-
 }

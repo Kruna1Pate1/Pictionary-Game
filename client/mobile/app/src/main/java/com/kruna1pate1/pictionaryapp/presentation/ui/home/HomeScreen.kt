@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kruna1pate1.pictionaryapp.presentation.ui.component.InputField
 import com.kruna1pate1.pictionaryapp.presentation.ui.component.MyButton
+import com.kruna1pate1.pictionaryapp.presentation.ui.game.component.TimeBar
 import com.kruna1pate1.pictionaryapp.presentation.ui.theme.PictionaryTheme
 import com.kruna1pate1.pictionaryapp.util.Constants.TAG
 

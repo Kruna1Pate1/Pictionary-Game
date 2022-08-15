@@ -1,16 +1,16 @@
 package com.kruna1pate1.pictionaryserver.service.Impl;
 
 import com.kruna1pate1.pictionaryserver.dto.GameDto;
-import com.kruna1pate1.pictionaryserver.dto.PlayerDto;
 import com.kruna1pate1.pictionaryserver.dto.RoomDto;
+import com.kruna1pate1.pictionaryserver.dto.RoundDto;
 import com.kruna1pate1.pictionaryserver.exception.RoomNotFoundException;
 import com.kruna1pate1.pictionaryserver.exception.RoomOutOfCapacityException;
-import com.kruna1pate1.pictionaryserver.model.Leaderboard;
 import com.kruna1pate1.pictionaryserver.model.Player;
 import com.kruna1pate1.pictionaryserver.model.Room;
-import com.kruna1pate1.pictionaryserver.model.Round;
 import com.kruna1pate1.pictionaryserver.model.enums.GameStatus;
 import com.kruna1pate1.pictionaryserver.model.enums.ServerCode;
+import com.kruna1pate1.pictionaryserver.service.LeaderboardService;
+import com.kruna1pate1.pictionaryserver.service.PlayerService;
 import com.kruna1pate1.pictionaryserver.service.RoomService;
 import com.kruna1pate1.pictionaryserver.service.RoundService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +35,13 @@ public class RoomServiceImpl implements RoomService {
 
     private final ModelMapper modelMapper;
     private final RoundService roundService;
-    private final PlayerServiceImpl playerService;
     private final Map<String, Room> rooms;
     private final Map<String, Sinks.Many<GameDto>> roomSinkMap;
 
 
-    public RoomServiceImpl(ModelMapper modelMapper, @Lazy RoundService roundService, PlayerServiceImpl playerService) {
+    public RoomServiceImpl(ModelMapper modelMapper, @Lazy RoundService roundService) {
         this.modelMapper = modelMapper;
         this.roundService = roundService;
-        this.playerService = playerService;
         this.rooms = new HashMap<>();
         this.roomSinkMap = new HashMap<>();
     }
@@ -166,59 +163,21 @@ public class RoomServiceImpl implements RoomService {
         );
     }
 
-    @Override
-    public void broadcastScores(String roomId) {
-        Leaderboard leaderboard = rooms.get(roomId).getLeaderboard();
-        roomSinkMap.get(roomId).tryEmitNext(
-                new GameDto<>(ServerCode.SCORES, leaderboard)
-        );
-    }
-
-    @Override
-    public void broadcastRoomPlayers(String roomId) {
-
-        PlayerDto[] players = Arrays.stream(rooms.get(roomId).getPlayers())
-                .map(playerService::playerToDto)
-                .toList()
-                .toArray(PlayerDto[]::new);
-
-        roomSinkMap.get(roomId).tryEmitNext(
-                new GameDto<>(ServerCode.PLAYERS, players)
-        );
-    }
-
-    @Override
-    public void broadcastAnswer(String roomId) {
-        String ans = roundService.getRound(roomId).getWordGroup().getSelectedWord();
-
-        roomSinkMap.get(roomId).tryEmitNext(
-                new GameDto<>(ServerCode.SELECT_WORD, ans)
-        );
-    }
 
     @Override
     public void broadcastRound(String roomId) {
-        Round round = roundService.getRound(roomId);
-
-        roomSinkMap.get(roomId).tryEmitNext(
-                new GameDto<>(ServerCode.ROUND, round)
+        RoundDto roundDto = roundService.roundToDto(
+                roundService.getRound(roomId)
         );
-    }
-
-    @Override
-    public void broadcastHint(String roomId) {
-        String hint = roundService.getRound(roomId).getWordGroup().getHint();
 
         roomSinkMap.get(roomId).tryEmitNext(
-                new GameDto<>(ServerCode.HINT, hint)
+                new GameDto<>(ServerCode.ROUND, roundDto)
         );
     }
 
     @Override
     public String selectWord(String roomId, int pos) {
-        String w = roundService.selectWord(roomId, pos);
-        broadcastHint(roomId);
-        return w;
+        return roundService.selectWord(roomId, pos);
     }
 
     @Override
@@ -239,53 +198,6 @@ public class RoomServiceImpl implements RoomService {
     public RoomDto roomToDto(Room room) {
 
         RoomDto dto = modelMapper.map(room, RoomDto.class);
-
-//        switch (code) {
-//
-//            case PING -> {
-//
-//            }
-//
-//            case GAME_DETAIL -> {
-//                dto = modelMapper.map(room, RoomDto.class);
-//            }
-//
-////            case PLAYERS -> {
-////                PlayerDto[] players = (PlayerDto[]) Arrays.stream(room.getPlayers()).map(playerService::playerToDto).toArray();
-////                dto.setPlayers(players);
-////            }
-//
-////            case JOIN -> {
-////
-////            }
-////
-////            case LEFT -> {
-////
-////            }
-//
-//            case WORDS -> {
-//
-//            }
-//
-//            case SELECT_WORD -> {
-//
-//            }
-//
-//            case WORD_SIZE -> {
-//
-//            }
-//
-//            case DRAW -> {
-//
-//            }
-//
-//            case CHAT -> {
-//
-//            }
-//
-//        }
-
-//        dto.setResponseCode(code);
         return dto;
     }
 }

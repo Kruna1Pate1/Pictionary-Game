@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kruna1pate1.pictionaryapp.domain.model.CreateRoom
 import com.kruna1pate1.pictionaryapp.domain.usecase.room.CreateRoomUseCase
+import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.NavigationManager
+import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.direction.Direction
 import com.kruna1pate1.pictionaryapp.util.Constants.TAG
 import com.kruna1pate1.pictionaryapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreateRoomViewModel @Inject constructor(
-    private val createRoomUseCase: CreateRoomUseCase
+    private val createRoomUseCase: CreateRoomUseCase,
+    private val navigationManager: NavigationManager
 ) : ViewModel() {
 
     private val _state = mutableStateOf(CreateRoomState())
@@ -47,6 +50,7 @@ class CreateRoomViewModel @Inject constructor(
                         result.data?.let {
                             Log.d(TAG, "createRoom: $it")
                         }
+                        navigationManager.navigate(Direction.Lobby)
                     }
                     is Resource.Error -> _state.value = state.value.copy(isLoading = true)
                     is Resource.Loading -> _state.value = state.value.copy(isLoading = true)

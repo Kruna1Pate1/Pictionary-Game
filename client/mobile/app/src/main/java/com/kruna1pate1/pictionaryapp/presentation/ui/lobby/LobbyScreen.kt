@@ -3,6 +3,7 @@ package com.kruna1pate1.pictionaryapp.presentation.ui.lobby
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -53,6 +54,8 @@ fun LobbyScreen(
             )
 
             Spacer(modifier = Modifier.height(14.dp))
+
+            if (viewModel.state.value.isLoading) CircularProgressIndicator()
 
             LazyColumn(
                 modifier = Modifier

@@ -65,4 +65,30 @@ class GameApi @Inject constructor(
         }
         return rSocket.requestChannel(initialPayload, payloadFlow)
     }
+
+    suspend fun selectWord(roomId: String, pos: Int): Payload {
+        val payload = buildPayload {
+            data("$pos")
+            metadata(RoutingMetadata("$ROUTE_ROOM.$roomId.word"))
+        }
+
+        return rSocket.requestResponse(payload)
+    }
+
+    suspend fun getPlayers(roomId: String): Payload {
+        val payload = buildPayload {
+            data("")
+            metadata(RoutingMetadata("$ROUTE_ROOM.$roomId.players"))
+        }
+
+        return rSocket.requestResponse(payload)
+    }
+    suspend fun getScores(roomId: String): Payload {
+        val payload = buildPayload {
+            data("")
+            metadata(RoutingMetadata("$ROUTE_ROOM.$roomId.scores"))
+        }
+
+        return rSocket.requestResponse(payload)
+    }
 }

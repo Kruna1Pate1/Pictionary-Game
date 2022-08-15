@@ -2,12 +2,11 @@ package com.kruna1pate1.pictionaryserver.controller;
 
 import com.kruna1pate1.pictionaryserver.dto.GameDto;
 import com.kruna1pate1.pictionaryserver.dto.MessageDto;
+import com.kruna1pate1.pictionaryserver.dto.PlayerDto;
 import com.kruna1pate1.pictionaryserver.exception.RoomNotFoundException;
 import com.kruna1pate1.pictionaryserver.model.DrawData;
-import com.kruna1pate1.pictionaryserver.service.BoardService;
-import com.kruna1pate1.pictionaryserver.service.ChatService;
+import com.kruna1pate1.pictionaryserver.service.*;
 import com.kruna1pate1.pictionaryserver.service.Impl.GameService;
-import com.kruna1pate1.pictionaryserver.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -15,6 +14,10 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by KRUNAL on 20-05-2022
@@ -26,8 +29,10 @@ public class GameController {
 
     private final RoomService roomService;
     private final GameService gameService;
+    private final PlayerService playerService;
     private final ChatService chatService;
     private final BoardService boardService;
+    private final LeaderboardService leaderboardService;
 
     @MessageMapping("room.join.{id}")
     public Flux<GameDto> joinRoom(Mono<Integer> playerId, @DestinationVariable("id") String roomId) {
@@ -55,34 +60,6 @@ public class GameController {
         });
     }
 
-    @MessageMapping("room.{id}")
-    public void broadcast(Mono<GameDto> gameDto, @DestinationVariable("id") String roomId) {
-
-        gameDto.subscribe(g -> {
-
-            switch (g.code()) {
-
-                case GAME_DETAIL -> {
-                    try {
-                        roomService.broadcastRoomDetails(roomId);
-                    } catch (RoomNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-                case PLAYERS -> {
-                }
-                case SCORES -> {
-                }
-                case SELECT_WORD -> {
-                }
-                case ROUND -> {
-                }
-                case HINT -> {
-                }
-            }
-
-        });
-    }
     @MessageMapping("room.{id}.chat")
     public Flux<MessageDto> getChat(Flux<MessageDto> messageDto, @DestinationVariable("id") String roomId) {
 
@@ -96,9 +73,34 @@ public class GameController {
     public Flux<DrawData> draw(Flux<DrawData> drawData, @DestinationVariable("id") String roomId) {
 
         return drawData
-                .log()
+//                .log()
                 .doOnNext(dd -> boardService.sendDrawData(roomId, dd))
                 .switchMap(dd -> boardService.getBoard(roomId));
     }
+
+
+    @MessageMapping("room.{id}.word")
+    public Mono<String> selectWord(Mono<Integer> pos, @DestinationVariable("id") String id) {
+
+        return pos.map(p -> roomService.selectWord(id, p));
+//                .doOnNext(ignored -> roomService.broadcastRound(id));
+    }
+
+    @MessageMapping("room.{id}.players")
+    public Mono<List<PlayerDto>> getPlayers(@DestinationVariable("id") String id) {
+
+        return Mono.just(
+                Arrays.stream(roomService.getRoom(id).getPlayers())
+                        .map(playerService::playerToDto)
+                        .toList()
+        );
+    }
+
+    @MessageMapping("room.{id}.scores")
+    public Mono<Map<Integer, Integer>> getScores(@DestinationVariable("id") String id) {
+
+        return Mono.just(leaderboardService.getLeaderboard(id).getScores());
+    }
+
 
 }

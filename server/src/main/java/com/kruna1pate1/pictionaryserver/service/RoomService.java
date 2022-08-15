@@ -6,7 +6,6 @@ import com.kruna1pate1.pictionaryserver.exception.RoomNotFoundException;
 import com.kruna1pate1.pictionaryserver.exception.RoomOutOfCapacityException;
 import com.kruna1pate1.pictionaryserver.model.Player;
 import com.kruna1pate1.pictionaryserver.model.Room;
-import com.kruna1pate1.pictionaryserver.model.enums.ServerCode;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -20,7 +19,7 @@ public interface RoomService {
 
     List<Room> getAllRoom(String query);
 
-    List<Room> getRoomStartsWith(String query);
+    List<Room> getRoomStartsWith(String s);
 
     Room createRoom(String name, int capacity);
 
@@ -36,15 +35,7 @@ public interface RoomService {
 
     void broadcastRoomDetails(String roomId) throws RoomNotFoundException;
 
-    void broadcastScores(String roomId);
-
-    void broadcastRoomPlayers(String roomId);
-
-    void broadcastAnswer(String roomId);
-
     void broadcastRound(String roomId);
-
-    void broadcastHint(String roomId);
 
     String selectWord(String roomId, int pos);
 

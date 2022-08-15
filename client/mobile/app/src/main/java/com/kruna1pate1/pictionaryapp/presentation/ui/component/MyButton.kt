@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 fun MyButton(
     modifier: Modifier = Modifier,
     text: String? = null,
+    isPrimary: Boolean = true,
     onClick: () -> Unit
 ) {
 
@@ -22,14 +23,15 @@ fun MyButton(
         modifier = modifier,
         onClick = onClick,
         shape = RoundedCornerShape(5.dp),
-        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface),
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = if (isPrimary) MaterialTheme.colors.surface else MaterialTheme.colors.secondary),
         contentPadding = PaddingValues(20.dp, 10.dp),
     ) {
         text?.let {
             Text(
                 text = it,
                 style = MaterialTheme.typography.button,
-                color = MaterialTheme.colors.primary,
+                color = if (isPrimary) MaterialTheme.colors.primary else MaterialTheme.colors.onPrimary,
                 textAlign = TextAlign.Center
             )
         }

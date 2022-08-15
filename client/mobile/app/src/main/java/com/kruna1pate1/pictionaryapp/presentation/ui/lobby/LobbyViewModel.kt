@@ -2,11 +2,9 @@ package com.kruna1pate1.pictionaryapp.presentation.ui.lobby
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kruna1pate1.pictionaryapp.domain.model.Room
-import com.kruna1pate1.pictionaryapp.domain.usecase.player.GetPlayerUseCase
 import com.kruna1pate1.pictionaryapp.domain.usecase.room.GetRoomsUseCase
 import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.NavigationManager
 import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.direction.Direction
@@ -20,9 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LobbyViewModel @Inject constructor(
     private val getRoomsUseCase: GetRoomsUseCase,
-    private val navigationManager: NavigationManager,
-    private val getPlayerUseCase: GetPlayerUseCase,
-    private val savedStateHandle: SavedStateHandle
+    private val navigationManager: NavigationManager
 ) : ViewModel() {
 
     private val _searchQuery = mutableStateOf("")
@@ -32,16 +28,9 @@ class LobbyViewModel @Inject constructor(
     val state: State<LobbyState> = _state
 
     fun init() {
-        getPlayer()
         onSearch("")
     }
 
-    private fun getPlayer() {
-        viewModelScope.launch {
-            val player = getPlayerUseCase().data
-            _state.value = LobbyState(player = player)
-        }
-    }
 
     private var searchJob: Job? = null
 
@@ -56,6 +45,7 @@ class LobbyViewModel @Inject constructor(
     }
 
     fun onRefresh() {
+        _state.value = LobbyState(isLoading = true)
         onSearch(searchQuery.value)
     }
 
@@ -65,6 +55,7 @@ class LobbyViewModel @Inject constructor(
         getRoomsUseCase(query).collect { result ->
             when (result) {
                 is Resource.Success -> {
+                    if (_state.value.isLoading) _state.value = LobbyState(isLoading = false)
                     result.data?.let {
                         _state.value.roomList.add(it)
                     }

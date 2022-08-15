@@ -1,4 +1,4 @@
-package com.kruna1pate1.pictionaryapp.presentation.ui.game.component
+package com.kruna1pate1.pictionaryapp.presentation.ui.game.component.canvas
 
 import android.util.Log
 import androidx.compose.foundation.background

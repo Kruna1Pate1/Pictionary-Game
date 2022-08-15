@@ -1,36 +1,36 @@
 package com.kruna1pate1.pictionaryapp.presentation.ui.game
 
-import android.util.Log
+import android.graphics.PointF
 import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kruna1pate1.pictionaryapp.data.dto.GameDto
-import com.kruna1pate1.pictionaryapp.domain.model.DrawData
-import com.kruna1pate1.pictionaryapp.domain.model.Message
-import com.kruna1pate1.pictionaryapp.domain.model.Player
-import com.kruna1pate1.pictionaryapp.domain.model.Room
+import com.kruna1pate1.pictionaryapp.domain.model.*
 import com.kruna1pate1.pictionaryapp.domain.model.enums.CanvasAction.*
-import com.kruna1pate1.pictionaryapp.domain.model.enums.ServerCode.GAME_DETAIL
-import com.kruna1pate1.pictionaryapp.domain.usecase.game.JoinRoomUseCase
-import com.kruna1pate1.pictionaryapp.domain.usecase.game.LeaveRoomUseCase
-import com.kruna1pate1.pictionaryapp.domain.usecase.game.ParseGameUseCase
+import com.kruna1pate1.pictionaryapp.domain.model.enums.RoundStatus.*
+import com.kruna1pate1.pictionaryapp.domain.model.enums.ServerCode.*
+import com.kruna1pate1.pictionaryapp.domain.usecase.game.*
 import com.kruna1pate1.pictionaryapp.domain.usecase.game.chat.BoardUseCase
 import com.kruna1pate1.pictionaryapp.domain.usecase.game.chat.ChatUseCase
 import com.kruna1pate1.pictionaryapp.domain.usecase.player.GetPlayerUseCase
+import com.kruna1pate1.pictionaryapp.presentation.ui.game.component.canvas.PathWrapper
 import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.NavigationManager
 import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.direction.Direction
 import com.kruna1pate1.pictionaryapp.presentation.ui.navigation.direction.NavigationCommand.Companion.KEY_ROOM_ID
-import com.kruna1pate1.pictionaryapp.util.Constants.TAG
 import com.kruna1pate1.pictionaryapp.util.Constants.getCurrentTime
 import com.kruna1pate1.pictionaryapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.getstream.sketchbook.SketchbookController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,6 +39,8 @@ class GameViewModel @Inject constructor(
     private val getPlayerUseCase: GetPlayerUseCase,
     private val parseGameUseCase: ParseGameUseCase,
     private val leaveRoomUseCase: LeaveRoomUseCase,
+    private val selectWordUseCase: SelectWordUseCase,
+    private val getScoreUseCase: GetScoreUseCase,
     private val chatUseCase: ChatUseCase,
     private val boardUseCase: BoardUseCase,
     private val navigationManager: NavigationManager,
@@ -49,6 +51,15 @@ class GameViewModel @Inject constructor(
     private lateinit var room: Room
     private lateinit var player: Player
 
+    private val _roundState = mutableStateOf(RoundState())
+    val roundState: State<RoundState> = _roundState
+
+    private val _scores = mutableStateOf(Score(emptyMap()))
+    val scores: State<Score> = _scores
+
+    private val _isShowScore = mutableStateOf(false)
+    val isShowScore: State<Boolean> = _isShowScore
+
     fun init() {
         getPlayer()
         joinRoom()
@@ -57,9 +68,18 @@ class GameViewModel @Inject constructor(
     }
 
     private fun getPlayer() {
-        viewModelScope.launch {
-            getPlayerUseCase().data?.let { p ->
-                player = p
+
+        if (::player.isInitialized) {
+            viewModelScope.launch {
+                getPlayerUseCase().data?.let { p ->
+                    player = p
+                }
+            }
+        } else {
+            runBlocking {
+                getPlayerUseCase().data?.let { p ->
+                    player = p
+                }
             }
         }
     }
@@ -69,7 +89,6 @@ class GameViewModel @Inject constructor(
         viewModelScope.launch {
 
             joinRoomUseCase(player.id, roomId).collect { result ->
-
                 when (result) {
                     is Resource.Success -> {
                         result.data?.let {
@@ -91,15 +110,76 @@ class GameViewModel @Inject constructor(
         when (gameDto.code) {
             GAME_DETAIL -> {
                 room = parseGameUseCase<Room>(gameDto).data
+                getPlayer()
+            }
+            ROUND -> {
+                parseRound(
+                    parseGameUseCase<Round>(gameDto).data
+                )
+            }
+            SCORES -> {
+                showScore(true)
             }
             else -> TODO()
         }
     }
 
-    private fun leaveGame() {
-        viewModelScope.launch {
-            leaveRoomUseCase(player.id, roomId)
+    private fun parseRound(round: Round) {
+        when (round.status) {
+            INITIAL -> _roundState.value = RoundState()
+            SELECTING_WORD -> {
+                if (round.drawer.id == player.id) {
+
+                    _roundState.value = RoundState(
+                        wordGroup = round.wordGroup,
+                        canDraw = true,
+                        status = SELECTING_WORD,
+                        totalTime = round.timeRemain
+                    )
+                } else {
+                    _pathList.clear()
+                    _roundState.value =
+                        RoundState(status = SELECTING_WORD, totalTime = round.timeRemain)
+                }
+            }
+            RUNNING -> {
+                _roundState.value = roundState.value.copy(
+                    status = RUNNING,
+                    totalTime = round.timeRemain,
+                    hint = round.wordGroup.hint
+                )
+                if (roundState.value.canDraw) {
+                    _roundState.value = roundState.value.copy(hint = round.wordGroup.selectedWord)
+                }
+            }
+            ANSWER -> {
+                _roundState.value = roundState.value.copy(
+                    status = ANSWER,
+                    totalTime = round.timeRemain,
+                    hint = round.wordGroup.selectedWord
+                )
+            }
+            COMPLETE -> {}
         }
+
+    }
+
+    fun selectWord(wordPos: Int) {
+        viewModelScope.launch {
+            selectWordUseCase(roomId, wordPos)
+        }
+    }
+
+    fun showScore(show: Boolean) {
+        if (show) {
+            viewModelScope.launch {
+                getScoreUseCase(roomId).data?.let {
+                    _scores.value = it
+                }
+            }
+        }
+
+        _isShowScore.value = show
     }
 
 
@@ -110,7 +190,6 @@ class GameViewModel @Inject constructor(
 
     private val _chatState = mutableStateOf(ChatState())
     val chatState: State<ChatState> = _chatState
-
 
     fun onMessageChange(message: String) {
         _message.value = message
@@ -136,53 +215,68 @@ class GameViewModel @Inject constructor(
     }
 
 
-    val sketchbookController = SketchbookController()
-    private val _canDraw = mutableStateOf(true)
-    val canDraw: State<Boolean> = _canDraw
-    private val path = Path()
-
     private val boardFlow = MutableSharedFlow<DrawData>()
-    private val color by sketchbookController.currentPaintColor
+
+    private val _pathList = mutableStateListOf<PathWrapper>()
+    val pathList: SnapshotStateList<PathWrapper> = _pathList
 
 
     private fun connectBoard() {
         viewModelScope.launch {
             val initialData = DrawData.redo()
-            boardUseCase(roomId, initialData, boardFlow).collect { result ->
-                if (result is Resource.Success && result.data != null) {
+            var path = Path()
+            val currentPoint = PointF(0f, 0f)
 
-                    val data = result.data
-                    Log.d(TAG, "connectBoard: $data")
-                    when (data.action) {
-                        RESET -> sketchbookController.clear()
-                        DRAW -> draw(result.data)
-                        ERASE -> TODO()
-                        UNDO -> sketchbookController.undo()
-                        REDO -> TODO()
+            boardUseCase(roomId, initialData, boardFlow).collect { result ->
+                if (!roundState.value.canDraw && result is Resource.Success && result.data != null) {
+                    val drawData = result.data
+                    when (drawData.action) {
+                        RESET -> {}
+                        DRAW -> {
+                            when (drawData.me) {
+                                0 -> {
+//                                path = Path()
+                                    path.moveTo(drawData.x, drawData.y)
+                                    currentPoint.x = drawData.x
+                                    currentPoint.y = drawData.y
+                                }
+                                1 -> {
+                                    pathList.add(
+                                        PathWrapper(
+                                            path,
+                                            strokeColor = Color(drawData.color)
+                                        )
+                                    )
+                                    path = Path()
+                                }
+                                2 -> {
+
+                                    path.quadraticBezierTo(
+                                        currentPoint.x,
+                                        currentPoint.y,
+                                        (drawData.x + currentPoint.x) / 2,
+                                        (drawData.y + currentPoint.y) / 2
+                                    )
+
+                                    currentPoint.x = drawData.x
+                                    currentPoint.y = drawData.y
+                                }
+                            }
+                        }
+                        ERASE -> {}
+                        UNDO -> {}
+                        REDO -> {}
                     }
                 }
             }
         }
     }
 
-    private fun draw(data: DrawData) {
-        sketchbookController.setPaintColor(color)
-
-        when (data.me) {
-            0 -> path.moveTo(data.x, data.y)
-            1 -> TODO()
-            2 -> path.lineTo(data.x, data.y)
-        }
-        sketchbookController.addDrawPath(path)
-    }
-
-
-    fun onDraw(x: Float, y: Float, me: Int) {
-        viewModelScope.launch {
-            val drawData = DrawData(x, y, me, DRAW, color)
+    fun onDraw(x: Float, y: Float, me: Int, color: Color) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val drawData = DrawData(x, y, me, DRAW, color.toArgb())
             boardFlow.emit(drawData)
         }
-//        Log.d(TAG, "onDraw: $x $y $me")
     }
 
     fun onUndo() {
@@ -191,5 +285,25 @@ class GameViewModel @Inject constructor(
             boardFlow.emit(drawData)
         }
     }
+
+
+    private val _isExit = mutableStateOf(false)
+    val isExit: State<Boolean> = _isExit
+
+    fun confirmExit() {
+        _isExit.value = true
+    }
+
+    fun cancelExit() {
+        _isExit.value = false
+    }
+
+    fun leaveGame() {
+        viewModelScope.launch {
+            leaveRoomUseCase(player.id, roomId)
+        }
+        navigationManager.navigate(Direction.Lobby)
+    }
+
 
 }

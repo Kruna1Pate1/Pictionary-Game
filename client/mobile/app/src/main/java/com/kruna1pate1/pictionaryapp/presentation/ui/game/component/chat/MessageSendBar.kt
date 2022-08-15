@@ -43,7 +43,8 @@ fun MessageSendBar(
             },
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words
-            )
+            ),
+            singleLine = true
         )
 
         IconButton(onClick = onSend) {
